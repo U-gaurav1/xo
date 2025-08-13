@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Neon Tic-Tac-Toe — Mobile</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">✦</div>
+        <div class="titles">
+          <div class="main">Neon XO</div>
+          <div class="sub">3 × 3 • 2 Players</div>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="restartBtn" class="icon-btn" title="Reset match (scores cleared)">Reset Match</button>
+      </div>
+    </header>
+
+    <main class="main-area">
+      <section class="board-wrap" aria-hidden="false">
+        <div id="board" class="board" role="grid" aria-label="tic tac toe board"></div>
+        <div id="screenGlow" class="screen-glow" aria-hidden="true"></div>
+      </section>
+
+      <section class="controls">
+        <div class="status">Turn: <span id="turnIndicator">X</span></div>
+
+        <div class="scores">
+          <div class="score">X: <strong id="xWins">0</strong></div>
+          <div class="score">O: <strong id="oWins">0</strong></div>
+          <div class="score">Draws: <strong id="draws">0</strong></div>
+        </div>
+
+        <div class="btn-row">
+          <button id="newRoundBtn" class="btn primary">New Round</button>
+          <button id="undoBtn" class="btn">Undo</button>
+        </div>
+
+        <p class="hint">Tap a cell. First to make 3 in a row wins. Neon glow highlights the winning line.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <small>Mobile-first • Dark &amp; Neon • Moderate animated background</small>
+    </footer>
+  </div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
