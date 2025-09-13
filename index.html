@@ -1,55 +1,244 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Neon Tic-Tac-Toe — Mobile</title>
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tic Tac Toe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      background: #111;
+      color: #fff;
+      padding: 10px;
+    }
+    h1 {
+      margin-bottom: 15px;
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      gap: 8px;
+      width: 90vmin;
+      max-width: 400px;
+      aspect-ratio: 1 / 1;
+    }
+    .cell {
+      background: #222;
+      border: 2px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(2rem, 10vw, 3rem);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.2s, color 0.3s;
+    }
+    .cell.taken {
+      cursor: not-allowed;
+    }
+    .cell.win {
+      background: #28a745;
+      color: #fff !important;
+      animation: glow 1s infinite alternate;
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 10px #28a745; }
+      to { box-shadow: 0 0 20px #28a745; }
+    }
+    #status {
+      margin-top: 15px;
+      font-size: clamp(1rem, 4vw, 1.5rem);
+      font-weight: bold;
+      text-align: center;
+    }
+    #restartBtn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      transition: background 0.2s;
+    }
+    #restartBtn:hover {
+      background: #0056b3;
+    }
+
+    /* Popup modal */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-content {
+      background: #fff;
+      color: #000;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+      max-width: 300px;
+      width: 80%;
+    }
+    .modal-content h2 {
+      margin: 0 0 15px;
+      font-size: clamp(1.2rem, 5vw, 1.8rem);
+    }
+    .modal-content button {
+      padding: 10px 20px;
+      font-size: clamp(1rem, 4vw, 1.2rem);
+      border: none;
+      border-radius: 8px;
+      background: #007bff;
+      color: white;
+      cursor: pointer;
+    }
+    .modal-content button:hover {
+      background: #0056b3;
+    }
+  </style>
 </head>
 <body>
-  <div class="app">
-    <header class="topbar">
-      <div class="brand">
-        <div class="logo">✦</div>
-        <div class="titles">
-          <div class="main">Neon XO</div>
-          <div class="sub">3 × 3 • 2 Players</div>
-        </div>
-      </div>
-      <div class="top-actions">
-        <button id="restartBtn" class="icon-btn" title="Reset match (scores cleared)">Reset Match</button>
-      </div>
-    </header>
+  <h1>Tic Tac Toe</h1>
+  <div class="board" id="board"></div>
+  <div id="status">Player X's turn</div>
+  <button id="restartBtn">Restart Game</button>
 
-    <main class="main-area">
-      <section class="board-wrap" aria-hidden="false">
-        <div id="board" class="board" role="grid" aria-label="tic tac toe board"></div>
-        <div id="screenGlow" class="screen-glow" aria-hidden="true"></div>
-      </section>
-
-      <section class="controls">
-        <div class="status">Turn: <span id="turnIndicator">X</span></div>
-
-        <div class="scores">
-          <div class="score">X: <strong id="xWins">0</strong></div>
-          <div class="score">O: <strong id="oWins">0</strong></div>
-          <div class="score">Draws: <strong id="draws">0</strong></div>
-        </div>
-
-        <div class="btn-row">
-          <button id="newRoundBtn" class="btn primary">New Round</button>
-          <button id="undoBtn" class="btn">Undo</button>
-        </div>
-
-        <p class="hint">Tap a cell. First to make 3 in a row wins. Neon glow highlights the winning line.</p>
-      </section>
-    </main>
-
-    <footer class="footer">
-      <small>Mobile-first • Dark &amp; Neon • Moderate animated background</small>
-    </footer>
+  <!-- Popup Modal -->
+  <div class="modal" id="resultModal">
+    <div class="modal-content">
+      <h2 id="resultMessage"></h2>
+      <button onclick="startGame(); closeModal()">Play Again</button>
+    </div>
   </div>
 
-  <script src="script.js" defer></script>
+  <script>
+    let board = ["", "", "", "", "", "", "", "", ""];
+    let currentPlayer = "X";
+    let gameActive = true;
+
+    let xMoves = [];
+    let oMoves = [];
+
+    const boardEl = document.getElementById("board");
+    const statusEl = document.getElementById("status");
+    const restartBtn = document.getElementById("restartBtn");
+    const modal = document.getElementById("resultModal");
+    const resultMessage = document.getElementById("resultMessage");
+
+    const winningCombos = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6],
+    ];
+
+    function startGame() {
+      board = ["", "", "", "", "", "", "", "", ""];
+      currentPlayer = "X";
+      gameActive = true;
+      xMoves = [];
+      oMoves = [];
+      statusEl.textContent = "Player X's turn";
+      boardEl.innerHTML = "";
+      for (let i = 0; i < 9; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.id = "cell" + i;
+        cell.addEventListener("click", () => makeMove(i));
+        boardEl.appendChild(cell);
+      }
+    }
+
+    function makeMove(index) {
+      if (!gameActive) return;
+      if (board[index] !== "") return;
+
+      // enforce max 3 marks rule
+      if (currentPlayer === "X") {
+        if (xMoves.length === 3) {
+          const oldest = xMoves.shift();
+          board[oldest] = "";
+          const oldCell = document.getElementById("cell" + oldest);
+          oldCell.textContent = "";
+          oldCell.classList.remove("taken");
+        }
+        xMoves.push(index);
+      } else {
+        if (oMoves.length === 3) {
+          const oldest = oMoves.shift();
+          board[oldest] = "";
+          const oldCell = document.getElementById("cell" + oldest);
+          oldCell.textContent = "";
+          oldCell.classList.remove("taken");
+        }
+        oMoves.push(index);
+      }
+
+      board[index] = currentPlayer;
+      const cellEl = document.getElementById("cell" + index);
+      cellEl.textContent = currentPlayer;
+      cellEl.classList.add("taken");
+
+      if (checkWin()) {
+        statusEl.textContent = `Player ${currentPlayer} wins! 🎉`;
+        showModal(`Player ${currentPlayer} wins! 🎉`);
+        gameActive = false;
+        return;
+      }
+
+      currentPlayer = currentPlayer === "X" ? "O" : "X";
+      statusEl.textContent = `Player ${currentPlayer}'s turn`;
+    }
+
+    function checkWin() {
+      for (let combo of winningCombos) {
+        if (
+          board[combo[0]] === currentPlayer &&
+          board[combo[1]] === currentPlayer &&
+          board[combo[2]] === currentPlayer
+        ) {
+          combo.forEach(i => {
+            document.getElementById("cell" + i).classList.add("win");
+          });
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function showModal(message) {
+      resultMessage.textContent = message;
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      modal.style.display = "none";
+    }
+
+    restartBtn.addEventListener("click", startGame);
+
+    startGame();
+  </script>
 </body>
-</html>
+  </html>
